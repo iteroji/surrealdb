@@ -32,7 +32,7 @@ async fn table_definitions_can_be_scanned() {
 	match tx.scan(tb::prefix(namespace, database)..tb::suffix(namespace, database), 1000).await {
 		Ok(scan) => {
 			assert_eq!(scan.len(), 1);
-			let read = DefineTableStatement::from(&scan[0].1);
+			let read = DefineTableStatement::from(scan[0].1.as_ref());
 			assert_eq!(&read, &value);
 		}
 		Err(e) => panic!("{:?}", e),

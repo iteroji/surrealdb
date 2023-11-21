@@ -25,7 +25,7 @@ async fn multiwriter_same_keys_allow() {
 	// Check that the key was updated ok
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap().unwrap();
-	assert_eq!(val, b"other text 3");
+	assert_eq!(val.as_slice(), b"other text 3");
 	tx.cancel().await.unwrap();
 	// Create a writeable transaction
 	let mut tx = ds.transaction(Write, Optimistic).await.unwrap();
@@ -34,6 +34,6 @@ async fn multiwriter_same_keys_allow() {
 	// Check that the key was updated ok
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap().unwrap();
-	assert_eq!(val, b"original text");
+	assert_eq!(val.as_slice(), b"original text");
 	tx.cancel().await.unwrap();
 }

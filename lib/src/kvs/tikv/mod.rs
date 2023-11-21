@@ -7,6 +7,7 @@ use crate::kvs::Key;
 use crate::kvs::Val;
 use crate::vs::{try_to_u64_be, u64_to_versionstamp, Versionstamp};
 use std::ops::Range;
+use std::sync::Arc;
 use tikv::CheckLevel;
 use tikv::TimestampExt;
 use tikv::TransactionOptions;
@@ -234,7 +235,7 @@ impl Transaction {
 		Ok(res)
 	}
 	/// Fetch a key from the database
-	pub(crate) async fn get<K>(&mut self, key: K) -> Result<Option<Val>, Error>
+	pub(crate) async fn get<K>(&mut self, key: K) -> Result<Option<Arc<Val>>, Error>
 	where
 		K: Into<Key>,
 	{
@@ -245,7 +246,7 @@ impl Transaction {
 		// Get the key
 		let res = self.inner.get(key.into()).await?;
 		// Return result
-		Ok(res)
+		Ok(res.map(Arc::new))
 	}
 	/// Insert or update a key in the database
 	pub(crate) async fn set<K, V>(&mut self, key: K, val: V) -> Result<(), Error>
@@ -376,7 +377,7 @@ impl Transaction {
 		&mut self,
 		rng: Range<K>,
 		limit: u32,
-	) -> Result<Vec<(Key, Val)>, Error>
+	) -> Result<Vec<(Key, Arc<Val>)>, Error>
 	where
 		K: Into<Key>,
 	{
@@ -391,7 +392,7 @@ impl Transaction {
 		};
 		// Scan the keys
 		let res = self.inner.scan(rng, limit).await?;
-		let res = res.map(|kv| (Key::from(kv.0), kv.1)).collect();
+		let res = res.map(|kv| (Key::from(kv.0), Arc::new(kv.1))).collect();
 		// Return result
 		Ok(res)
 	}

@@ -197,7 +197,7 @@ where
 		Ok(val)
 	}
 
-	fn try_from_val(val: Val) -> Result<Self, Error> {
+	fn try_from_val(val: &Val) -> Result<Self, Error> {
 		Ok(Self::deserialize_revisioned(&mut val.as_slice())?)
 	}
 }

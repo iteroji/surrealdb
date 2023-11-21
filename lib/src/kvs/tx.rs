@@ -374,7 +374,7 @@ impl Transaction {
 
 	/// Fetch a key from the datastore.
 	#[allow(unused_variables)]
-	pub async fn get<K>(&mut self, key: K) -> Result<Option<Val>, Error>
+	pub async fn get<K>(&mut self, key: K) -> Result<Option<Arc<Val>>, Error>
 	where
 		K: Into<Key> + Debug,
 	{
@@ -647,7 +647,11 @@ impl Transaction {
 	///
 	/// This function fetches the full range of key-value pairs, in a single request to the underlying datastore.
 	#[allow(unused_variables)]
-	pub async fn scan<K>(&mut self, rng: Range<K>, limit: u32) -> Result<Vec<(Key, Val)>, Error>
+	pub async fn scan<K>(
+		&mut self,
+		rng: Range<K>,
+		limit: u32,
+	) -> Result<Vec<(Key, Arc<Val>)>, Error>
 	where
 		K: Into<Key> + Debug,
 	{
@@ -786,7 +790,11 @@ impl Transaction {
 	/// Retrieve a specific range of keys from the datastore.
 	///
 	/// This function fetches key-value pairs from the underlying datastore in batches of 1000.
-	pub async fn getr<K>(&mut self, rng: Range<K>, limit: u32) -> Result<Vec<(Key, Val)>, Error>
+	pub async fn getr<K>(
+		&mut self,
+		rng: Range<K>,
+		limit: u32,
+	) -> Result<Vec<(Key, Arc<Val>)>, Error>
 	where
 		K: Into<Key> + Debug,
 	{
@@ -796,7 +804,7 @@ impl Transaction {
 		let end: Key = rng.end.into();
 		let mut nxt: Option<Key> = None;
 		let mut num = limit;
-		let mut out: Vec<(Key, Val)> = vec![];
+		let mut out: Vec<(Key, Arc<Val>)> = vec![];
 		// Start processing
 		while num > 0 {
 			// Get records batch
@@ -912,7 +920,7 @@ impl Transaction {
 	/// Retrieve a specific prefix of keys from the datastore.
 	///
 	/// This function fetches key-value pairs from the underlying datastore in batches of 1000.
-	pub async fn getp<K>(&mut self, key: K, limit: u32) -> Result<Vec<(Key, Val)>, Error>
+	pub async fn getp<K>(&mut self, key: K, limit: u32) -> Result<Vec<(Key, Arc<Val>)>, Error>
 	where
 		K: Into<Key> + Debug,
 	{
@@ -922,7 +930,7 @@ impl Transaction {
 		let end: Key = beg.clone().add(0xff);
 		let mut nxt: Option<Key> = None;
 		let mut num = limit;
-		let mut out: Vec<(Key, Val)> = vec![];
+		let mut out: Vec<(Key, Arc<Val>)> = vec![];
 		// Start processing
 		while num > 0 {
 			// Get records batch
@@ -1018,7 +1026,7 @@ impl Transaction {
 		let key = crate::key::root::nd::Nd::new(id);
 		let val = self.get(key).await?;
 		match val {
-			Some(v) => Ok(Some::<ClusterMembership>(v.into())),
+			Some(v) => Ok(Some::<ClusterMembership>(v.as_ref().into())),
 			None => Ok(None),
 		}
 	}
@@ -1172,7 +1180,7 @@ impl Transaction {
 				if n == i + 1 {
 					nxt = Some(k.clone());
 				}
-				out.push((&v).into());
+				out.push(v.as_ref().into());
 				// Count
 				if limit > 0 {
 					num -= 1;
@@ -1245,13 +1253,13 @@ impl Transaction {
 					nxt = Some(key.clone());
 				}
 				let lq = crate::key::node::lq::Lq::decode(key.as_slice())?;
-				let tb: String = String::from_utf8(value).unwrap();
+				let tb = String::from_utf8_lossy(value.as_slice());
 				trace!("scan_lq Found tb: {:?}", tb);
 				out.push(LqValue {
 					nd: lq.nd.into(),
 					ns: lq.ns.to_string(),
 					db: lq.db.to_string(),
-					tb,
+					tb: tb.to_string(),
 					lq: lq.lq.into(),
 				});
 				// Count
@@ -1312,7 +1320,7 @@ impl Transaction {
 					nxt = Some(key.clone());
 				}
 				let lv = crate::key::table::lq::Lq::decode(key.as_slice())?;
-				let val: LiveStatement = value.into();
+				let val: LiveStatement = value.as_ref().into();
 				out.push(LqValue {
 					nd: val.node,
 					ns: lv.ns.to_string(),
@@ -1755,14 +1763,12 @@ impl Transaction {
 		for (key, value) in lq_pairs {
 			let lq_key = crate::key::node::lq::Lq::decode(key.as_slice())?;
 			trace!("Value is {:?}", &value);
-			let lq_value = String::from_utf8(value).map_err(|e| {
-				Error::Internal(format!("Failed to decode a value while reading LQ: {}", e))
-			})?;
+			let lq_value = String::from_utf8_lossy(value.as_slice());
 			let lqv = LqValue {
 				nd: (*nd).into(),
 				ns: lq_key.ns.to_string(),
 				db: lq_key.db.to_string(),
-				tb: lq_value,
+				tb: lq_value.to_string(),
 				lq: lq_key.lq.into(),
 			};
 			lqs.push(lqv);
@@ -1776,7 +1782,7 @@ impl Transaction {
 		let val = self.get(key).await?.ok_or(Error::UserRootNotFound {
 			value: user.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Retrieve a specific namespace definition.
@@ -1785,7 +1791,7 @@ impl Transaction {
 		let val = self.get(key).await?.ok_or(Error::NsNotFound {
 			value: ns.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Retrieve a specific user definition from a namespace.
@@ -1799,7 +1805,7 @@ impl Transaction {
 			value: user.to_owned(),
 			ns: ns.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Retrieve a specific namespace token definition.
@@ -1812,7 +1818,7 @@ impl Transaction {
 		let val = self.get(key).await?.ok_or(Error::NtNotFound {
 			value: nt.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Retrieve a specific database definition.
@@ -1821,7 +1827,7 @@ impl Transaction {
 		let val = self.get(key).await?.ok_or(Error::DbNotFound {
 			value: db.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Retrieve a specific user definition from a database.
@@ -1837,7 +1843,7 @@ impl Transaction {
 			ns: ns.to_owned(),
 			db: db.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Retrieve a specific database token definition.
@@ -1851,7 +1857,7 @@ impl Transaction {
 		let val = self.get(key).await?.ok_or(Error::DtNotFound {
 			value: dt.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Retrieve a specific analyzer definition.
@@ -1865,7 +1871,7 @@ impl Transaction {
 		let val = self.get(key).await?.ok_or(Error::AzNotFound {
 			value: az.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Retrieve a specific scope definition.
@@ -1879,7 +1885,7 @@ impl Transaction {
 		let val = self.get(key).await?.ok_or(Error::ScNotFound {
 			value: sc.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Retrieve a specific scope token definition.
@@ -1894,7 +1900,7 @@ impl Transaction {
 		let val = self.get(key).await?.ok_or(Error::StNotFound {
 			value: st.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Return the table stored at the lq address
@@ -1909,7 +1915,7 @@ impl Transaction {
 		let val = self.get(key).await?.ok_or(Error::LqNotFound {
 			value: lq.to_string(),
 		})?;
-		Value::from(val).convert_to_strand()
+		Value::from(val.as_ref()).convert_to_strand()
 	}
 
 	/// Retrieve a specific table definition.
@@ -1923,7 +1929,7 @@ impl Transaction {
 		let val = self.get(key).await?.ok_or(Error::TbNotFound {
 			value: tb.to_owned(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Retrieve a live query for a table.
@@ -1940,7 +1946,7 @@ impl Transaction {
 		let val = self.get(key_enc).await?.ok_or(Error::LvNotFound {
 			value: lv.to_string(),
 		})?;
-		Ok(val.into())
+		Ok(val.as_ref().into())
 	}
 
 	/// Add a namespace with a default configuration, only if we are in dynamic mode.
@@ -2077,7 +2083,7 @@ impl Transaction {
 			let val = self.get(key.clone()).await?.ok_or(Error::NsNotFound {
 				value: ns.to_owned(),
 			})?;
-			let val: Arc<DefineNamespaceStatement> = Arc::new(val.into());
+			let val: Arc<DefineNamespaceStatement> = Arc::new(val.as_ref().into());
 			self.cache.set(key, Entry::Ns(Arc::clone(&val)));
 			val
 		})
@@ -2100,7 +2106,7 @@ impl Transaction {
 			let val = self.get(key.clone()).await?.ok_or(Error::DbNotFound {
 				value: db.to_owned(),
 			})?;
-			let val: Arc<DefineDatabaseStatement> = Arc::new(val.into());
+			let val: Arc<DefineDatabaseStatement> = Arc::new(val.as_ref().into());
 			self.cache.set(key, Entry::Db(Arc::clone(&val)));
 			val
 		})
@@ -2124,7 +2130,7 @@ impl Transaction {
 			let val = self.get(key.clone()).await?.ok_or(Error::TbNotFound {
 				value: tb.to_owned(),
 			})?;
-			let val: Arc<DefineTableStatement> = Arc::new(val.into());
+			let val: Arc<DefineTableStatement> = Arc::new(val.as_ref().into());
 			self.cache.set(key, Entry::Tb(Arc::clone(&val)));
 			val
 		})
@@ -2148,7 +2154,7 @@ impl Transaction {
 			let val = self.get(key.clone()).await?.ok_or(Error::FcNotFound {
 				value: fc.to_owned(),
 			})?;
-			let val: Arc<DefineFunctionStatement> = Arc::new(val.into());
+			let val: Arc<DefineFunctionStatement> = Arc::new(val.as_ref().into());
 			self.cache.set(key, Entry::Fc(Arc::clone(&val)));
 			val
 		})
@@ -2172,7 +2178,7 @@ impl Transaction {
 			let val = self.get(key.clone()).await?.ok_or(Error::PaNotFound {
 				value: pa.to_owned(),
 			})?;
-			let val: Arc<DefineParamStatement> = Arc::new(val.into());
+			let val: Arc<DefineParamStatement> = Arc::new(val.as_ref().into());
 			self.cache.set(key, Entry::Pa(Arc::clone(&val)));
 			val
 		})
@@ -2197,7 +2203,7 @@ impl Transaction {
 			let val = self.get(key.clone()).await?.ok_or(Error::IxNotFound {
 				value: ix.to_owned(),
 			})?;
-			let val: Arc<DefineIndexStatement> = Arc::new(val.into());
+			let val: Arc<DefineIndexStatement> = Arc::new(val.as_ref().into());
 			self.cache.set(key, Entry::Ix(Arc::clone(&val)));
 			val
 		})
@@ -2506,7 +2512,7 @@ impl Transaction {
 								}
 								// Parse the key and the value
 								let k: crate::key::thing::Thing = (&k).into();
-								let v: Value = (&v).into();
+								let v: Value = v.as_ref().into();
 								let t = Thing::from((k.tb, k.id));
 								// Check if this is a graph edge
 								match (v.pick(&*EDGE), v.pick(&*IN), v.pick(&*OUT)) {
@@ -2747,7 +2753,7 @@ impl Transaction {
 		let ts_key = crate::key::database::ts::new(ns, db, ts);
 		let begin = ts_key.encode()?;
 		let end = crate::key::database::ts::suffix(ns, db);
-		let ts_pairs: Vec<(Vec<u8>, Vec<u8>)> = self.getr(begin..end, u32::MAX).await?;
+		let ts_pairs: Vec<(Key, Arc<Val>)> = self.getr(begin..end, u32::MAX).await?;
 		let latest_ts_pair = ts_pairs.last();
 		if let Some((k, _)) = latest_ts_pair {
 			let k = crate::key::database::ts::Ts::decode(k)?;

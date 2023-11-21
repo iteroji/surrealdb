@@ -27,7 +27,7 @@ pub trait BKeys: Default + Display + Sized {
 	fn get_child_idx(&self, searched_key: &Key) -> usize;
 	fn get_first_key(&self) -> Option<(Key, Payload)>;
 	fn get_last_key(&self) -> Option<(Key, Payload)>;
-	fn read_from(c: &mut Cursor<Vec<u8>>) -> Result<Self, Error>;
+	fn read_from(c: &mut Cursor<&[u8]>) -> Result<Self, Error>;
 	fn write_to(&self, c: &mut Cursor<Vec<u8>>) -> Result<(), Error>;
 	fn compile(&mut self) {}
 	fn debug<F>(&self, to_string: F) -> Result<(), Error>
@@ -229,7 +229,7 @@ impl BKeys for FstKeys {
 		}
 	}
 
-	fn read_from(c: &mut Cursor<Vec<u8>>) -> Result<Self, Error> {
+	fn read_from(c: &mut Cursor<&[u8]>) -> Result<Self, Error> {
 		let bytes: Vec<u8> = bincode::deserialize_from(c)?;
 		Ok(Self::try_from(bytes)?)
 	}
@@ -444,7 +444,7 @@ impl BKeys for TrieKeys {
 		self.keys.iter().last().map(|(k, p)| (k.clone(), *p))
 	}
 
-	fn read_from(c: &mut Cursor<Vec<u8>>) -> Result<Self, Error> {
+	fn read_from(c: &mut Cursor<&[u8]>) -> Result<Self, Error> {
 		let compressed: Vec<u8> = bincode::deserialize_from(c)?;
 		let mut uncompressed: Vec<u8> = Vec::new();
 		{
@@ -551,7 +551,7 @@ mod tests {
 		let buf = cur.into_inner();
 		assert_eq!(buf.len(), expected_size);
 		// Deserialize
-		let mut cur = Cursor::new(buf);
+		let mut cur = Cursor::new(buf.as_slice());
 		let keys = BK::read_from(&mut cur).unwrap();
 		assert_eq!(keys.get(&key), Some(130));
 	}

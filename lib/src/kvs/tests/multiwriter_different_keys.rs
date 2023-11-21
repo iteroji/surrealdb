@@ -25,12 +25,12 @@ async fn multiwriter_different_keys() {
 	// Check that the key was updated ok
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap().unwrap();
-	assert_eq!(val, b"some text");
+	assert_eq!(val.as_ref(), b"some text");
 	let val = tx.get("test1").await.unwrap().unwrap();
-	assert_eq!(val, b"other text 1");
+	assert_eq!(val.as_ref(), b"other text 1");
 	let val = tx.get("test2").await.unwrap().unwrap();
-	assert_eq!(val, b"other text 2");
+	assert_eq!(val.as_ref(), b"other text 2");
 	let val = tx.get("test3").await.unwrap().unwrap();
-	assert_eq!(val, b"other text 3");
+	assert_eq!(val.as_ref(), b"other text 3");
 	tx.cancel().await.unwrap();
 }

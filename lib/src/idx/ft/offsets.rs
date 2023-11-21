@@ -38,7 +38,7 @@ impl Offsets {
 	) -> Result<Option<OffsetRecords>, Error> {
 		let key = self.index_key_base.new_bo_key(doc_id, term_id);
 		if let Some(val) = tx.get(key).await? {
-			let offsets = val.try_into()?;
+			let offsets = val.as_ref().try_into()?;
 			Ok(Some(offsets))
 		} else {
 			Ok(None)
@@ -100,14 +100,14 @@ impl TryFrom<OffsetRecords> for Val {
 	}
 }
 
-impl TryFrom<Val> for OffsetRecords {
+impl TryFrom<&Val> for OffsetRecords {
 	type Error = Error;
 
-	fn try_from(val: Val) -> Result<Self, Self::Error> {
+	fn try_from(val: &Val) -> Result<Self, Self::Error> {
 		if val.is_empty() {
 			return Ok(Self(vec![]));
 		}
-		let decompressed: Vec<u32> = bincode::deserialize(&val)?;
+		let decompressed: Vec<u32> = bincode::deserialize(val.as_slice())?;
 		let mut iter = decompressed.iter();
 		let s = *iter.next().ok_or(Error::CorruptedIndex)?;
 		let mut indexes = Vec::with_capacity(s as usize);
@@ -135,7 +135,7 @@ mod tests {
 		let o =
 			OffsetRecords(vec![Offset::new(0, 1, 2), Offset::new(0, 11, 22), Offset::new(1, 3, 4)]);
 		let v: Val = o.clone().try_into().unwrap();
-		let o2 = v.try_into().unwrap();
+		let o2: OffsetRecords = (&v).try_into().unwrap();
 		assert_eq!(o, o2)
 	}
 }

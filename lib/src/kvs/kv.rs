@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 /// The key part of a key-value pair. An alias for [`Vec<u8>`].
 pub type Key = Vec<u8>;
 
@@ -36,5 +38,14 @@ where
 {
 	fn convert(self) -> Vec<T> {
 		self.into_iter().map(|(_, v)| v.into()).collect()
+	}
+}
+
+impl<T> Convert<Vec<T>> for Vec<(Key, Arc<Val>)>
+where
+	T: for<'a> From<&'a Val>,
+{
+	fn convert(self) -> Vec<T> {
+		self.into_iter().map(|(_, v)| v.as_ref().into()).collect()
 	}
 }

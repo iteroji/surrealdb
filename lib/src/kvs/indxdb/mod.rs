@@ -6,6 +6,7 @@ use crate::kvs::Key;
 use crate::kvs::Val;
 use crate::vs::{try_to_u64_be, u64_to_versionstamp, Versionstamp};
 use std::ops::Range;
+use std::sync::Arc;
 
 pub struct Datastore {
 	db: indxdb::Db,
@@ -136,7 +137,7 @@ impl Transaction {
 		Ok(res)
 	}
 	/// Fetch a key from the database
-	pub(crate) async fn get<K>(&mut self, key: K) -> Result<Option<Val>, Error>
+	pub(crate) async fn get<K>(&mut self, key: K) -> Result<Option<Arc<Val>>, Error>
 	where
 		K: Into<Key>,
 	{
@@ -147,7 +148,7 @@ impl Transaction {
 		// Get the key
 		let res = self.inner.get(key.into()).await?;
 		// Return result
-		Ok(res)
+		Ok(res.map(Arc::new))
 	}
 	/// Obtain a new change timestamp for a key
 	/// which is replaced with the current timestamp when the transaction is committed.
@@ -310,7 +311,7 @@ impl Transaction {
 		&mut self,
 		rng: Range<K>,
 		limit: u32,
-	) -> Result<Vec<(Key, Val)>, Error>
+	) -> Result<Vec<(Key, Arc<Val>)>, Error>
 	where
 		K: Into<Key>,
 	{
@@ -324,7 +325,8 @@ impl Transaction {
 			end: rng.end.into(),
 		};
 		// Scan the keys
-		let res = self.inner.scan(rng, limit).await?;
+		let res =
+			self.inner.scan(rng, limit).await?.into_iter().map(|(k, v)| (k, Arc::new(v))).collect();
 		// Return result
 		Ok(res)
 	}

@@ -277,7 +277,7 @@ impl<'a> IndexOperation<'a> {
 					if run.putc(key, self.rid, None).await.is_err() {
 						let key = self.get_unique_index_key(&n);
 						let val = run.get(key).await?.unwrap();
-						let rid: Thing = val.into();
+						let rid: Thing = val.as_ref().into();
 						return self.err_index_exists(rid, n);
 					}
 				}
@@ -308,7 +308,7 @@ impl<'a> IndexOperation<'a> {
 				if run.putc(key, self.rid, None).await.is_err() {
 					let key = self.get_non_unique_index_key(&n);
 					let val = run.get(key).await?.unwrap();
-					let rid: Thing = val.into();
+					let rid: Thing = val.as_ref().into();
 					return self.err_index_exists(rid, n);
 				}
 			}

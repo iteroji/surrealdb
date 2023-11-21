@@ -47,7 +47,7 @@ impl<'a> Document<'a> {
 					let val = txn.clone().lock().await.get(key).await?;
 					// Parse the data from the store
 					let val = match val {
-						Some(v) => Value::from(v),
+						Some(v) => Value::from(v.as_ref()),
 						None => Value::None,
 					};
 					pro = Processed {

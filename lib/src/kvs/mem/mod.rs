@@ -6,9 +6,10 @@ use crate::kvs::Key;
 use crate::kvs::Val;
 use crate::vs::{try_to_u64_be, u64_to_versionstamp, Versionstamp};
 use std::ops::Range;
+use std::sync::Arc;
 
 pub struct Datastore {
-	db: echodb::Db<Key, Val>,
+	db: echodb::Db<Key, Arc<Val>>,
 }
 
 pub struct Transaction {
@@ -19,7 +20,7 @@ pub struct Transaction {
 	/// Should we check unhandled transactions?
 	check: Check,
 	/// The underlying datastore transaction
-	inner: echodb::Tx<Key, Val>,
+	inner: echodb::Tx<Key, Arc<Val>>,
 }
 
 impl Drop for Transaction {
@@ -133,7 +134,7 @@ impl Transaction {
 		Ok(res)
 	}
 	/// Fetch a key from the database
-	pub(crate) fn get<K>(&mut self, key: K) -> Result<Option<Val>, Error>
+	pub(crate) fn get<K>(&mut self, key: K) -> Result<Option<Arc<Val>>, Error>
 	where
 		K: Into<Key>,
 	{
@@ -180,7 +181,7 @@ impl Transaction {
 
 		let verbytes = u64_to_versionstamp(ver);
 
-		self.inner.set(k, verbytes.to_vec())?;
+		self.inner.set(k, Arc::new(verbytes.to_vec()))?;
 		// Return the uint64 representation of the timestamp as the result
 		Ok(verbytes)
 	}
@@ -232,7 +233,7 @@ impl Transaction {
 			return Err(Error::TxReadonly);
 		}
 		// Set the key
-		self.inner.set(key.into(), val.into())?;
+		self.inner.set(key.into(), Arc::new(val.into()))?;
 		// Return result
 		Ok(())
 	}
@@ -251,7 +252,7 @@ impl Transaction {
 			return Err(Error::TxReadonly);
 		}
 		// Set the key
-		self.inner.put(key.into(), val.into())?;
+		self.inner.put(key.into(), Arc::new(val.into()))?;
 		// Return result
 		Ok(())
 	}
@@ -270,7 +271,7 @@ impl Transaction {
 			return Err(Error::TxReadonly);
 		}
 		// Set the key
-		self.inner.putc(key.into(), val.into(), chk.map(Into::into))?;
+		self.inner.putc(key.into(), Arc::new(val.into()), chk.map(|v| Arc::new(v.into())))?;
 		// Return result
 		Ok(())
 	}
@@ -307,12 +308,16 @@ impl Transaction {
 			return Err(Error::TxReadonly);
 		}
 		// Remove the key
-		self.inner.delc(key.into(), chk.map(Into::into))?;
+		self.inner.delc(key.into(), chk.map(|v| Arc::new(v.into())))?;
 		// Return result
 		Ok(())
 	}
 	/// Retrieve a range of keys from the databases
-	pub(crate) fn scan<K>(&mut self, rng: Range<K>, limit: u32) -> Result<Vec<(Key, Val)>, Error>
+	pub(crate) fn scan<K>(
+		&mut self,
+		rng: Range<K>,
+		limit: u32,
+	) -> Result<Vec<(Key, Arc<Val>)>, Error>
 	where
 		K: Into<Key>,
 	{

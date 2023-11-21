@@ -44,7 +44,7 @@ impl MTreeIndex {
 			Arc::new(RwLock::new(DocIds::new(tx, ikb.clone(), p.doc_ids_order, st).await?));
 		let state_key = ikb.new_vm_key(None);
 		let state: MState = if let Some(val) = tx.get(state_key.clone()).await? {
-			MState::try_from_val(val)?
+			MState::try_from_val(val.as_ref())?
 		} else {
 			MState::new(p.capacity)
 		};
@@ -1490,8 +1490,8 @@ pub type InternalNode = InternalMap;
 pub type LeafNode = LeafMap;
 
 impl TreeNode for MTreeNode {
-	fn try_from_val(val: Val) -> Result<Self, Error> {
-		let mut c: Cursor<Vec<u8>> = Cursor::new(val);
+	fn try_from_val(val: &Val) -> Result<Self, Error> {
+		let mut c = Cursor::new(val.as_slice());
 		let node_type: u8 = bincode::deserialize_from(&mut c)?;
 		match node_type {
 			1u8 => {

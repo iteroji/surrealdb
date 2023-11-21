@@ -229,7 +229,7 @@ impl Transaction {
 			.map_err(|e| Error::Tx(format!("Unable to get kv from FoundationDB: {}", e)))
 	}
 	/// Fetch a key from the database
-	pub(crate) async fn get<K>(&mut self, key: K) -> Result<Option<Val>, Error>
+	pub(crate) async fn get<K>(&mut self, key: K) -> Result<Option<Arc<Val>>, Error>
 	where
 		K: Into<Key>,
 	{
@@ -250,7 +250,7 @@ impl Transaction {
 		inner
 			.get(key, self.snapshot())
 			.await
-			.map(|v| v.as_ref().map(|v| v.to_vec()))
+			.map(|v| v.as_ref().map(|v| Arc::new(v.to_vec())))
 			.map_err(|e| Error::Tx(format!("Unable to get kv from FoundationDB: {}", e)))
 	}
 	/// Obtain a new change timestamp for a key
@@ -487,7 +487,7 @@ impl Transaction {
 		&mut self,
 		rng: Range<K>,
 		limit: u32,
-	) -> Result<Vec<(Key, Val)>, Error>
+	) -> Result<Vec<(Key, Arc<Val>)>, Error>
 	where
 		K: Into<Key>,
 	{
@@ -515,12 +515,12 @@ impl Transaction {
 		// on the get request.
 		// See https://apple.github.io/foundationdb/api-c.html#snapshot-reads for more information on how the snapshot get is supposed to work in FDB.
 		let mut stream = inner.get_ranges_keyvalues(opt, self.snapshot());
-		let mut res: Vec<(Key, Val)> = vec![];
+		let mut res = vec![];
 		loop {
 			let x = stream.try_next().await;
 			match x {
 				Ok(Some(v)) => {
-					let x = (Key::from(v.key()), Val::from(v.value()));
+					let x = (Key::from(v.key()), Arc::new(Val::from(v.value())));
 					res.push(x)
 				}
 				Ok(None) => break,

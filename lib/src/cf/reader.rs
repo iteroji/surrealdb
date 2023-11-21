@@ -62,7 +62,7 @@ pub async fn read(
 		let ts = dec.vs;
 
 		// Decode the byte array into a vector of operations
-		let tb_muts: TableMutations = v.into();
+		let tb_muts: TableMutations = v.as_ref().into();
 
 		match vs {
 			Some(x) => {

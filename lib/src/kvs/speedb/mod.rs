@@ -217,7 +217,7 @@ impl Transaction {
 		Ok(res)
 	}
 	/// Fetch a key from the database
-	pub(crate) async fn get<K>(&mut self, key: K) -> Result<Option<Val>, Error>
+	pub(crate) async fn get<K>(&mut self, key: K) -> Result<Option<Arc<Val>>, Error>
 	where
 		K: Into<Key>,
 	{
@@ -228,7 +228,7 @@ impl Transaction {
 		// Get the key
 		let res = self.inner.lock().await.as_ref().unwrap().get_opt(key.into(), &self.ro)?;
 		// Return result
-		Ok(res)
+		Ok(res.map(Arc::new))
 	}
 	/// Obtain a new change timestamp for a key
 	/// which is replaced with the current timestamp when the transaction is committed.
@@ -426,7 +426,7 @@ impl Transaction {
 		&mut self,
 		rng: Range<K>,
 		limit: u32,
-	) -> Result<Vec<(Key, Val)>, Error>
+	) -> Result<Vec<(Key, Arc<Val>)>, Error>
 	where
 		K: Into<Key>,
 	{
@@ -463,7 +463,7 @@ impl Transaction {
 				// Check the key and value
 				if let (Some(k), Some(v)) = (k, v) {
 					if k >= beg && k < end {
-						res.push((k.to_vec(), v.to_vec()));
+						res.push((k.to_vec(), Arc::new(v.to_vec())));
 						iter.next();
 						continue;
 					}

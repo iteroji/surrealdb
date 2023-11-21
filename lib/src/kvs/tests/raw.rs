@@ -42,7 +42,7 @@ async fn get() {
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap();
-	assert!(matches!(val.as_deref(), Some(b"ok")));
+	assert_eq!(val.as_deref(), Some(&vec![b'o', b'k']));
 	let val = tx.get("none").await.unwrap();
 	assert!(val.as_deref().is_none());
 	tx.cancel().await.unwrap();
@@ -62,7 +62,7 @@ async fn set() {
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap();
-	assert!(matches!(val.as_deref(), Some(b"one")));
+	assert_eq!(val.as_deref(), Some(&vec![b'o', b'n', b'e']));
 	tx.cancel().await.unwrap();
 	// Create a writeable transaction
 	let mut tx = ds.transaction(Write, Optimistic).await.unwrap();
@@ -71,7 +71,7 @@ async fn set() {
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap();
-	assert!(matches!(val.as_deref(), Some(b"two")));
+	assert_eq!(val.as_deref(), Some(&vec![b't', b'w', b'o']));
 	tx.cancel().await.unwrap();
 }
 
@@ -89,7 +89,7 @@ async fn put() {
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap();
-	assert!(matches!(val.as_deref(), Some(b"one")));
+	assert_eq!(val.as_deref(), Some(&vec![b'o', b'n', b'e']));
 	tx.cancel().await.unwrap();
 	// Create a writeable transaction
 	let mut tx = ds.transaction(Write, Optimistic).await.unwrap();
@@ -98,7 +98,7 @@ async fn put() {
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap();
-	assert!(matches!(val.as_deref(), Some(b"one")));
+	assert_eq!(val.as_deref(), Some(&vec![b'o', b'n', b'e']));
 	tx.cancel().await.unwrap();
 }
 
@@ -138,7 +138,7 @@ async fn putc() {
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap();
-	assert!(matches!(val.as_deref(), Some(b"one")));
+	assert_eq!(val.as_deref(), Some(&vec![b'o', b'n', b'e']));
 	tx.cancel().await.unwrap();
 	// Create a writeable transaction
 	let mut tx = ds.transaction(Write, Optimistic).await.unwrap();
@@ -147,7 +147,7 @@ async fn putc() {
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap();
-	assert!(matches!(val.as_deref(), Some(b"two")));
+	assert_eq!(val.as_deref(), Some(&vec![b't', b'w', b'o']));
 	tx.cancel().await.unwrap();
 	// Create a writeable transaction
 	let mut tx = ds.transaction(Write, Optimistic).await.unwrap();
@@ -156,7 +156,7 @@ async fn putc() {
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap();
-	assert!(matches!(val.as_deref(), Some(b"two")));
+	assert_eq!(val.as_deref(), Some(&vec![b't', b'w', b'o']));
 	tx.cancel().await.unwrap();
 }
 
@@ -178,7 +178,7 @@ async fn delc() {
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.get("test").await.unwrap();
-	assert!(matches!(val.as_deref(), Some(b"one")));
+	assert_eq!(val.as_deref(), Some(&vec![b'o', b'n', b'e']));
 	tx.cancel().await.unwrap();
 	// Create a writeable transaction
 	let mut tx = ds.transaction(Write, Optimistic).await.unwrap();
@@ -211,32 +211,32 @@ async fn scan() {
 	let val = tx.scan("test1".."test9", u32::MAX).await.unwrap();
 	assert_eq!(val.len(), 5);
 	assert_eq!(val[0].0, b"test1");
-	assert_eq!(val[0].1, b"1");
+	assert_eq!(val[0].1.as_slice(), b"1");
 	assert_eq!(val[1].0, b"test2");
-	assert_eq!(val[1].1, b"2");
+	assert_eq!(val[1].1.as_slice(), b"2");
 	assert_eq!(val[2].0, b"test3");
-	assert_eq!(val[2].1, b"3");
+	assert_eq!(val[2].1.as_slice(), b"3");
 	assert_eq!(val[3].0, b"test4");
-	assert_eq!(val[3].1, b"4");
+	assert_eq!(val[3].1.as_slice(), b"4");
 	assert_eq!(val[4].0, b"test5");
-	assert_eq!(val[4].1, b"5");
+	assert_eq!(val[4].1.as_slice(), b"5");
 	tx.cancel().await.unwrap();
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.scan("test2".."test4", u32::MAX).await.unwrap();
 	assert_eq!(val.len(), 2);
 	assert_eq!(val[0].0, b"test2");
-	assert_eq!(val[0].1, b"2");
+	assert_eq!(val[0].1.as_slice(), b"2");
 	assert_eq!(val[1].0, b"test3");
-	assert_eq!(val[1].1, b"3");
+	assert_eq!(val[1].1.as_slice(), b"3");
 	tx.cancel().await.unwrap();
 	// Create a readonly transaction
 	let mut tx = ds.transaction(Read, Optimistic).await.unwrap();
 	let val = tx.scan("test1".."test9", 2).await.unwrap();
 	assert_eq!(val.len(), 2);
 	assert_eq!(val[0].0, b"test1");
-	assert_eq!(val[0].1, b"1");
+	assert_eq!(&val[0].1.as_slice(), b"1");
 	assert_eq!(val[1].0, b"test2");
-	assert_eq!(val[1].1, b"2");
+	assert_eq!(&val[1].1.as_slice(), b"2");
 	tx.cancel().await.unwrap();
 }

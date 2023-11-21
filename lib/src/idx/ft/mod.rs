@@ -118,7 +118,7 @@ impl FtIndex {
 	) -> Result<Self, Error> {
 		let state_key: Key = index_key_base.new_bs_key();
 		let state: State = if let Some(val) = run.get(state_key.clone()).await? {
-			State::try_from_val(val)?
+			State::try_from_val(val.as_ref())?
 		} else {
 			State::default()
 		};
@@ -471,7 +471,7 @@ impl HitsIterator {
 	) -> Result<Option<(Thing, DocId)>, Error> {
 		for doc_id in self.iter.by_ref() {
 			if let Some(doc_key) = self.doc_ids.read().await.get_doc_key(tx, doc_id).await? {
-				return Ok(Some((doc_key.into(), doc_id)));
+				return Ok(Some((doc_key.as_ref().into(), doc_id)));
 			}
 		}
 		Ok(None)

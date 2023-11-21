@@ -143,7 +143,7 @@ impl<'a> Processor<'a> {
 		let val = txn.clone().lock().await.get(key).await?;
 		// Parse the data from the store
 		let val = Operable::Value(match val {
-			Some(v) => Value::from(v),
+			Some(v) => Value::from(v.as_ref()),
 			None => Value::None,
 		});
 		// Process the document record
@@ -196,7 +196,7 @@ impl<'a> Processor<'a> {
 		let val = txn.clone().lock().await.get(key).await?;
 		// Parse the data from the store
 		let x = match val {
-			Some(v) => Value::from(v),
+			Some(v) => Value::from(v.as_ref()),
 			None => Value::None,
 		};
 		// Create a new operable value
@@ -231,7 +231,7 @@ impl<'a> Processor<'a> {
 		let val = txn.clone().lock().await.get(key).await?;
 		// Parse the data from the store
 		let x = match val {
-			Some(v) => Value::from(v),
+			Some(v) => Value::from(v.as_ref()),
 			None => Value::None,
 		};
 		// Create a new operable value
@@ -299,7 +299,7 @@ impl<'a> Processor<'a> {
 					}
 					// Parse the data from the store
 					let key: thing::Thing = (&k).into();
-					let val: Value = (&v).into();
+					let val: Value = v.as_ref().into();
 					let rid = Thing::from((key.tb, key.id));
 					// Create a new operable value
 					let val = Operable::Value(val);
@@ -388,7 +388,7 @@ impl<'a> Processor<'a> {
 					}
 					// Parse the data from the store
 					let key: thing::Thing = (&k).into();
-					let val: Value = (&v).into();
+					let val: Value = v.as_ref().into();
 					let rid = Thing::from((key.tb, key.id));
 					// Create a new operable value
 					let val = Operable::Value(val);
@@ -535,7 +535,7 @@ impl<'a> Processor<'a> {
 						let rid = Thing::from((gra.ft, gra.fk));
 						// Parse the data from the store
 						let val = Operable::Value(match val {
-							Some(v) => Value::from(v),
+							Some(v) => Value::from(v.as_ref()),
 							None => Value::None,
 						});
 						// Process the record
@@ -595,7 +595,7 @@ impl<'a> Processor<'a> {
 							let rid = Thing::from((key.tb, key.id));
 							// Parse the data from the store
 							let val = Operable::Value(match val {
-								Some(v) => Value::from(v),
+								Some(v) => Value::from(v.as_ref()),
 								None => Value::None,
 							});
 							// Process the document record

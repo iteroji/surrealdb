@@ -105,8 +105,8 @@ impl<BK> TreeNode for BTreeNode<BK>
 where
 	BK: BKeys,
 {
-	fn try_from_val(val: Val) -> Result<Self, Error> {
-		let mut c: Cursor<Vec<u8>> = Cursor::new(val);
+	fn try_from_val(val: &Val) -> Result<Self, Error> {
+		let mut c = Cursor::new(val.as_slice());
 		let node_type: u8 = bincode::deserialize_from(&mut c)?;
 		let keys = BK::read_from(&mut c)?;
 		match node_type {
@@ -710,7 +710,7 @@ mod tests {
 	fn test_btree_state_serde() {
 		let s = BState::new(3);
 		let val = s.try_to_val().unwrap();
-		let s: BState = BState::try_from_val(val).unwrap();
+		let s: BState = BState::try_from_val(val.as_ref()).unwrap();
 		assert_eq!(s.minimum_degree, 3);
 		assert_eq!(s.root, None);
 		assert_eq!(s.next_node_id, 0);
@@ -721,14 +721,14 @@ mod tests {
 		let mut node = BTreeNode::Internal(FstKeys::default(), vec![]);
 		node.keys_mut().compile();
 		let val = node.try_into_val().unwrap();
-		let _: BTreeNode<FstKeys> = BTreeNode::try_from_val(val).unwrap();
+		let _: BTreeNode<FstKeys> = BTreeNode::try_from_val(val.as_ref()).unwrap();
 	}
 
 	#[test]
 	fn test_node_serde_leaf() {
 		let mut node = BTreeNode::Leaf(TrieKeys::default());
 		let val = node.try_into_val().unwrap();
-		let _: BTreeNode<TrieKeys> = BTreeNode::try_from_val(val).unwrap();
+		let _: BTreeNode<TrieKeys> = BTreeNode::try_from_val(&val).unwrap();
 	}
 
 	async fn insertions_test<F, BK>(

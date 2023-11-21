@@ -33,7 +33,7 @@ impl DocIds {
 	) -> Result<Self, Error> {
 		let state_key: Key = index_key_base.new_bd_key(None);
 		let state: State = if let Some(val) = tx.get(state_key.clone()).await? {
-			State::try_from_val(val)?
+			State::try_from_val(&val)?
 		} else {
 			State::new(default_btree_order)
 		};
@@ -123,7 +123,7 @@ impl DocIds {
 		&self,
 		tx: &mut Transaction,
 		doc_id: DocId,
-	) -> Result<Option<Key>, Error> {
+	) -> Result<Option<Arc<Key>>, Error> {
 		let doc_id_key = self.index_key_base.new_bi_key(doc_id);
 		if let Some(val) = tx.get(doc_id_key).await? {
 			Ok(Some(val))
@@ -202,6 +202,7 @@ mod tests {
 	use crate::idx::trees::store::TreeStoreType;
 	use crate::idx::IndexKeyBase;
 	use crate::kvs::{Datastore, LockType::*, Transaction, TransactionType::*};
+	use std::sync::Arc;
 
 	const BTREE_ORDER: u32 = 7;
 
@@ -226,7 +227,7 @@ mod tests {
 			let (mut tx, mut d) = get_doc_ids(&ds, TreeStoreType::Write).await;
 			let doc_id = d.resolve_doc_id(&mut tx, "Foo".into()).await.unwrap();
 			assert_eq!(d.statistics(&mut tx).await.unwrap().keys_count, 1);
-			assert_eq!(d.get_doc_key(&mut tx, 0).await.unwrap(), Some("Foo".into()));
+			assert_eq!(d.get_doc_key(&mut tx, 0).await.unwrap(), Some(Arc::new("Foo".into())));
 			finish(tx, d).await;
 			assert_eq!(doc_id, Resolved::New(0));
 		}
@@ -236,7 +237,7 @@ mod tests {
 			let (mut tx, mut d) = get_doc_ids(&ds, TreeStoreType::Write).await;
 			let doc_id = d.resolve_doc_id(&mut tx, "Foo".into()).await.unwrap();
 			assert_eq!(d.statistics(&mut tx).await.unwrap().keys_count, 1);
-			assert_eq!(d.get_doc_key(&mut tx, 0).await.unwrap(), Some("Foo".into()));
+			assert_eq!(d.get_doc_key(&mut tx, 0).await.unwrap(), Some(Arc::new("Foo".into())));
 			finish(tx, d).await;
 			assert_eq!(doc_id, Resolved::Existing(0));
 		}
@@ -246,7 +247,7 @@ mod tests {
 			let (mut tx, mut d) = get_doc_ids(&ds, TreeStoreType::Write).await;
 			let doc_id = d.resolve_doc_id(&mut tx, "Bar".into()).await.unwrap();
 			assert_eq!(d.statistics(&mut tx).await.unwrap().keys_count, 2);
-			assert_eq!(d.get_doc_key(&mut tx, 1).await.unwrap(), Some("Bar".into()));
+			assert_eq!(d.get_doc_key(&mut tx, 1).await.unwrap(), Some(Arc::new("Bar".into())));
 			finish(tx, d).await;
 			assert_eq!(doc_id, Resolved::New(1));
 		}
@@ -286,10 +287,10 @@ mod tests {
 				d.resolve_doc_id(&mut tx, "World".into()).await.unwrap(),
 				Resolved::Existing(3)
 			);
-			assert_eq!(d.get_doc_key(&mut tx, 0).await.unwrap(), Some("Foo".into()));
-			assert_eq!(d.get_doc_key(&mut tx, 1).await.unwrap(), Some("Bar".into()));
-			assert_eq!(d.get_doc_key(&mut tx, 2).await.unwrap(), Some("Hello".into()));
-			assert_eq!(d.get_doc_key(&mut tx, 3).await.unwrap(), Some("World".into()));
+			assert_eq!(d.get_doc_key(&mut tx, 0).await.unwrap(), Some(Arc::new("Foo".into())));
+			assert_eq!(d.get_doc_key(&mut tx, 1).await.unwrap(), Some(Arc::new("Bar".into())));
+			assert_eq!(d.get_doc_key(&mut tx, 2).await.unwrap(), Some(Arc::new("Hello".into())));
+			assert_eq!(d.get_doc_key(&mut tx, 3).await.unwrap(), Some(Arc::new("World".into())));
 			assert_eq!(d.statistics(&mut tx).await.unwrap().keys_count, 4);
 			finish(tx, d).await;
 		}

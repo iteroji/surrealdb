@@ -273,7 +273,7 @@ impl TreeNodeProvider {
 		let key = self.get_key(id);
 		if let Some(val) = tx.get(key.clone()).await? {
 			let size = val.len() as u32;
-			let node = N::try_from_val(val)?;
+			let node = N::try_from_val(val.as_ref())?;
 			Ok(StoredNode {
 				n: node,
 				id,
@@ -317,6 +317,6 @@ pub trait TreeNode
 where
 	Self: Sized,
 {
-	fn try_from_val(val: Val) -> Result<Self, Error>;
+	fn try_from_val(val: &Val) -> Result<Self, Error>;
 	fn try_into_val(&mut self) -> Result<Val, Error>;
 }

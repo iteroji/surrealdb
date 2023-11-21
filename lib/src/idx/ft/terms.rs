@@ -30,7 +30,7 @@ impl Terms {
 	) -> Result<Self, Error> {
 		let state_key: Key = index_key_base.new_bt_key(None);
 		let state: State = if let Some(val) = tx.get(state_key.clone()).await? {
-			State::try_from_val(val)?
+			State::try_from_val(&val)?
 		} else {
 			State::new(default_btree_order)
 		};
@@ -101,7 +101,7 @@ impl Terms {
 		let term_id_key = self.index_key_base.new_bu_key(term_id);
 		if let Some(term_key) = tx.get(term_id_key.clone()).await? {
 			let mut store = self.store.lock().await;
-			self.btree.delete(tx, &mut store, term_key.clone()).await?;
+			self.btree.delete(tx, &mut store, term_key.as_ref().clone()).await?;
 			tx.del(term_id_key).await?;
 			if let Some(available_ids) = &mut self.available_ids {
 				available_ids.insert(term_id);

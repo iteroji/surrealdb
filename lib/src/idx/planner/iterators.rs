@@ -70,7 +70,7 @@ impl IndexEqualThingIterator {
 			key.push(0x00);
 			*beg = key;
 		}
-		let res = res.iter().map(|(_, val)| (val.into(), NO_DOC_ID)).collect();
+		let res = res.iter().map(|(_, val)| (val.as_ref().into(), NO_DOC_ID)).collect();
 		Ok(res)
 	}
 
@@ -184,7 +184,7 @@ impl IndexRangeThingIterator {
 		let mut r = Vec::with_capacity(res.len());
 		for (k, v) in res {
 			if self.r.matches(&k) {
-				r.push((v.into(), NO_DOC_ID));
+				r.push((v.as_ref().into(), NO_DOC_ID));
 			}
 		}
 		Ok(r)
@@ -247,7 +247,7 @@ impl UniqueEqualThingIterator {
 	async fn next_batch(&mut self, txn: &Transaction) -> Result<Vec<(Thing, DocId)>, Error> {
 		if let Some(key) = self.key.take() {
 			if let Some(val) = txn.lock().await.get(key).await? {
-				return Ok(vec![(val.into(), NO_DOC_ID)]);
+				return Ok(vec![(val.as_ref().into(), NO_DOC_ID)]);
 			}
 		}
 		Ok(vec![])
@@ -320,13 +320,13 @@ impl UniqueRangeThingIterator {
 				return Ok(r);
 			}
 			if self.r.matches(&k) {
-				r.push((v.into(), NO_DOC_ID));
+				r.push((v.as_ref().into(), NO_DOC_ID));
 			}
 		}
 		let end = self.r.end.clone();
 		if self.r.matches(&end) {
 			if let Some(v) = tx.get(end).await? {
-				r.push((v.into(), NO_DOC_ID));
+				r.push((v.as_ref().into(), NO_DOC_ID));
 			}
 		}
 		self.done = true;
@@ -391,7 +391,7 @@ impl DocIdsIterator {
 				if let Some(doc_key) =
 					self.doc_ids.read().await.get_doc_key(&mut tx, doc_id).await?
 				{
-					res.push((doc_key.into(), doc_id));
+					res.push((doc_key.as_ref().into(), doc_id));
 					limit -= 1;
 				}
 			} else {

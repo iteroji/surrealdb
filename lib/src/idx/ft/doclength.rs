@@ -25,7 +25,7 @@ impl DocLengths {
 	) -> Result<Self, Error> {
 		let state_key: Key = index_key_base.new_bl_key(None);
 		let state: BState = if let Some(val) = tx.get(state_key.clone()).await? {
-			BState::try_from_val(val)?
+			BState::try_from_val(&val)?
 		} else {
 			BState::new(default_btree_order)
 		};
