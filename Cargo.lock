@@ -858,26 +858,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bindgen"
-version = "0.69.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ffcebc3849946a7170a05992aac39da343a90676ab392c51a4280981d6379c2"
-dependencies = [
- "bitflags 2.4.1",
- "cexpr",
- "clang-sys",
- "lazy_static",
- "lazycell",
- "peeking_take_while",
- "proc-macro2",
- "quote",
- "regex",
- "rustc-hash",
- "shlex",
- "syn 2.0.39",
-]
-
-[[package]]
 name = "bit-set"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1963,6 +1943,7 @@ dependencies = [
 [[package]]
 name = "foundationdb-sys"
 version = "0.8.0"
+source = "git+https://github.com/surrealdb/foundationdb-rs.git?branch=static-lib#e4ec86151eb75c860172782239aefc1355bdb138"
 dependencies = [
  "bindgen 0.65.1",
 ]
@@ -2938,9 +2919,11 @@ dependencies = [
 
 [[package]]
 name = "librocksdb-sys"
-version = "0.14.0+8.8.1"
+version = "0.11.0+8.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3386f101bcb4bd252d8e9d2fb41ec3b0862a15a62b478c355b2982efa469e3e"
 dependencies = [
- "bindgen 0.69.1",
+ "bindgen 0.65.1",
  "bzip2-sys",
  "cc",
  "glob",
@@ -4377,6 +4360,8 @@ checksum = "cbf4a6aa5f6d6888f39e980649f3ad6b666acdce1d78e95b8a2cb076e687ae30"
 [[package]]
 name = "rocksdb"
 version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb6f170a4041d50a0ce04b0d2e14916d6ca863ea2e422689a5b694395d299ffe"
 dependencies = [
  "libc",
  "librocksdb-sys",
@@ -6612,7 +6597,3 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
-
-[[patch.unused]]
-name = "speedb"
-version = "0.0.3"

@@ -23,7 +23,7 @@ RUN source /opt/rh/devtoolset-11/enable && ninja -C /build_output fdb_c
 
 FROM docker.io/rockylinux:8 as builder
 
-RUN yum install -y cargo rust-1.71.* patch clang-16.0.*
+RUN yum install -y cargo rust-1.71.* patch clang-16.0.* gcc-toolset-13
 
 ###
 # STAGE: builder-fdb
@@ -35,7 +35,7 @@ RUN yum install -y cargo rust-1.71.* patch clang-16.0.*
 FROM builder as builder-fdb
 
 RUN sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/Rocky-Devel.repo
-RUN yum install -y openssl-static
+RUN yum install -y openssl-static-1.1.1k
 
 ENV FDB_CLIENT_STATIC=1
 ENV FDB_CLIENT_LIB_PATHS=/usr/local/lib:/usr/lib64

@@ -86,10 +86,7 @@ mimalloc = { version = "0.1.39", default-features = false }
 jemallocator = "0.5.4"
 
 [patch.crates-io]
-foundationdb-sys = { path = "crates/foundationdb-rs/foundationdb-sys", package = "foundationdb-sys" }
-rocksdb = { path = "crates/rust-rocksdb", package = "rocksdb" }
-speedb = { path = "crates/rust-speedb", package = "speedb", optional = true }
-
+foundationdb-sys = { git = "https://github.com/surrealdb/foundationdb-rs.git", branch = "static-lib" }
 
 [dev-dependencies]
 assert_fs = "1.0.13"
