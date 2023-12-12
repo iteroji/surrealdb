@@ -142,7 +142,6 @@ jobs:
         with:
           context: artifacts
           load: true
-          push: ${{ needs.prepare.outputs.with-ecr == 'true' }} # Push to CI registry if AWS credentials are set
           platforms: linux/amd64,linux/arm64
           file: docker/Dockefile
           target: ${{ matrix.build-target }}
@@ -171,12 +170,25 @@ jobs:
             sleep 1
           done
 
+      - name: Push to ECR CI registry
+        uses: docker/build-push-action@v5
+        # Push to CI registry only if AWS credentials are set
+        if: ${{ needs.prepare.outputs.with-ecr == 'true' }}
+        with:
+          context: artifacts
+          push: true
+          platforms: linux/amd64,linux/arm64
+          file: docker/Dockefile
+          target: ${{ matrix.build-target }}
+          tags: surrealdb-ci:${{ inputs.tag-prefix }}${{ matrix.tag-suffix }}-${{ github.run_id }}
+          build-args: |
+            ARTIFACT_PREFIX=surreal-${{ inputs.tag-prefix }}
+
       - name: Push to DockerHub
         uses: docker/build-push-action@v5
         if : ${{ inputs.push }}
         with:
           context: artifacts
-          load: true
           push: true
           platforms: linux/amd64,linux/arm64
           file: docker/Dockefile
@@ -190,7 +202,6 @@ jobs:
         if: ${{ inputs.push && inputs.latest }}
         with:
           context: artifacts
-          load: true
           push: true
           platforms: linux/amd64,linux/arm64
           file: docker/Dockefile
