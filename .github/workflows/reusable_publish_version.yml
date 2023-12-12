@@ -422,6 +422,9 @@ jobs:
           toolchain: 1.71.1
           targets: ${{ matrix.arch }}
 
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Output package versions
         run: |
           set -x
