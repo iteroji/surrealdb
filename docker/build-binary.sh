@@ -29,7 +29,7 @@ echo
 $DOCKER_BINARY build -t surrealdb-local/builder --target $DOCKER_BUILD_TARGET -f docker/Dockerfile .
 $DOCKER_BINARY run \
     --rm \
-    -ti \
+    -i \
     -v $(pwd):/surrealdb \
     -w /surrealdb \
     surrealdb-local/builder \
