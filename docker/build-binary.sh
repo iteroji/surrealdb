@@ -5,10 +5,10 @@ set -eo pipefail
 ROOT_DIR=$(dirname $(dirname $(realpath $0)))
 
 : ${DOCKER_BINARY:=docker}
+: ${CARGO_EXTRA_FEATURES:="http-compression,storage-tikv,storage-speedb"}
 
 cd $ROOT_DIR
 
-export CARGO_EXTRA_FEATURES="http-compression,storage-tikv,storage-speedb"
 export DOCKER_BUILD_TARGET="builder" # Target for the binary builder
 
 if [[ $(uname -m) == "x86_64" ]]; then
