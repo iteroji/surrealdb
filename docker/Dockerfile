@@ -25,6 +25,8 @@ FROM docker.io/rockylinux:8 as builder
 
 RUN yum install -y cargo rust-1.71.* patch clang-16.0.* gcc-toolset-13
 
+ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-redhat-linux-gcc
+
 ###
 # STAGE: builder-fdb
 # This stage is used to build the SurrealDB binary with FoundationDB support
