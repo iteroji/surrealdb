@@ -87,6 +87,7 @@ jemallocator = "0.5.4"
 
 [patch.crates-io]
 foundationdb-sys = { git = "https://github.com/surrealdb/foundationdb-rs.git", branch = "static-lib" }
+# foundationdb-sys = { path = "crates/foundationdb-rs/foundationdb-sys" }
 
 [dev-dependencies]
 assert_fs = "1.0.13"

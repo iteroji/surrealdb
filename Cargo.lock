@@ -1943,7 +1943,7 @@ dependencies = [
 [[package]]
 name = "foundationdb-sys"
 version = "0.8.0"
-source = "git+https://github.com/surrealdb/foundationdb-rs.git?branch=static-lib#e4ec86151eb75c860172782239aefc1355bdb138"
+source = "git+https://github.com/surrealdb/foundationdb-rs.git?branch=static-lib#7bc6d47d08e5680f677035d78908155e368681ff"
 dependencies = [
  "bindgen 0.65.1",
 ]
