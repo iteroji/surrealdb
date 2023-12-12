@@ -442,7 +442,7 @@ jobs:
             ${{ matrix.file }}.exe
 
   # For testing purposes only
-  docker:
+  docker-test:
     name: Docker images
     needs: [prepare-vars, build]
     uses: ./.github/workflows/reusable_docker.yml
