@@ -142,7 +142,7 @@ jobs:
           context: artifacts
           load: true
           platforms: linux/amd64
-          file: docker/Dockefile
+          file: docker/Dockerfile
           target: ${{ matrix.build-target }}
           tags: surrealdb-amd64
           build-args: |
@@ -154,7 +154,7 @@ jobs:
           context: artifacts
           load: true
           platforms: linux/arm64
-          file: docker/Dockefile
+          file: docker/Dockerfile
           target: ${{ matrix.build-target }}
           tags: surrealdb-arm64
           build-args: |
@@ -176,7 +176,7 @@ jobs:
           context: artifacts
           push: true
           platforms: linux/amd64,linux/arm64
-          file: docker/Dockefile
+          file: docker/Dockerfile
           target: ${{ matrix.build-target }}
           tags: ${{ steps.login-ecr.outputs.registry }}/surrealdb-ci:${{ inputs.tag-prefix }}${{ matrix.tag-suffix }}-${{ github.run_id }}
           build-args: |
@@ -195,7 +195,7 @@ jobs:
           context: artifacts
           push: true
           platforms: linux/amd64,linux/arm64
-          file: docker/Dockefile
+          file: docker/Dockerfile
           target: ${{ matrix.build-target }}
           tags: surrealdb/surrealdb:${{ inputs.tag-prefix }}${{ matrix.tag-suffix }}
           build-args: |
@@ -208,7 +208,7 @@ jobs:
           context: artifacts
           push: true
           platforms: linux/amd64,linux/arm64
-          file: docker/Dockefile
+          file: docker/Dockerfile
           target: ${{ matrix.build-target }}
           tags: surrealdb/surrealdb:latest${{ matrix.tag-suffix }}
           build-args: |
