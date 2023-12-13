@@ -136,39 +136,37 @@ jobs:
         with:
           path: artifacts
 
-      - name: Build Docker image
+      - name: Build Docker image (amd64)
         uses: docker/build-push-action@v5
-        id: build
         with:
           context: artifacts
           load: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           file: docker/Dockefile
           target: ${{ matrix.build-target }}
-          tags: surrealdb-ci:${{ inputs.tag-prefix }}${{ matrix.tag-suffix }}-${{ github.run_id }}
+          tags: surrealdb-amd64
           build-args: |
             ARTIFACT_PREFIX=surreal-${{ inputs.tag-prefix }}
 
-      # Start the docker image as server and wait until it is ready
-      - name: Test the Docker image
-        run: |
-          docker run --net=host --rm ${{ steps.build.outputs.imageid }} start 2>&1 >surreal.log &
+      - name: Build Docker image (arm64)
+        uses: docker/build-push-action@v5
+        with:
+          context: artifacts
+          load: true
+          platforms: linux/arm64
+          file: docker/Dockefile
+          target: ${{ matrix.build-target }}
+          tags: surrealdb-arm64
+          build-args: |
+            ARTIFACT_PREFIX=surreal-${{ inputs.tag-prefix }}
 
-          retries=5
-          until docker run --net=host --rm ${{ steps.build.outputs.imageid }} is-ready; do
-            retries=$((retries-1))
-            if [[ $retries -eq 0 ]]; then
-              echo "###"
-              echo "### The container is not ready after 5 seconds!"
-              echo "###"
-              cat surreal.log
-              echo "###"
-              echo "### ERROR: The docker image is not valid. Aborting."
-              echo "###"
-              exit 1
-            fi
-            sleep 1
-          done
+      - name: Test Docker images
+        if: ${{ inputs.push }}
+        env:
+          ARTIFACT_PREFIX: surreal-${{ inputs.tag-prefix }}
+        run: |
+          docker run -t --rm surrealdb-amd64 version
+          docker run -t --rm surrealdb-arm64 version
 
       - name: Push to ECR CI registry
         uses: docker/build-push-action@v5
@@ -180,9 +178,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           file: docker/Dockefile
           target: ${{ matrix.build-target }}
-          tags: surrealdb-ci:${{ inputs.tag-prefix }}${{ matrix.tag-suffix }}-${{ github.run_id }}
+          tags: ${{ steps.login-ecr.outputs.registry }}/surrealdb-ci:${{ inputs.tag-prefix }}${{ matrix.tag-suffix }}-${{ github.run_id }}
           build-args: |
             ARTIFACT_PREFIX=surreal-${{ inputs.tag-prefix }}
+
+      #########################################
+      ###
+      ###   Steps when inputs.push == true
+      ###
+      #########################################
 
       - name: Push to DockerHub
         uses: docker/build-push-action@v5

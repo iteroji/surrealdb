@@ -37,7 +37,7 @@ ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-redhat-linux-gcc
 FROM builder as builder-fdb
 
 # RUN sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/Rocky-Devel.repo
-RUN yum install -y openssl-devel-1.1.1k
+RUN yum install -y openssl-static-1.1.1k
 
 ENV FDB_CLIENT_STATIC=1
 ENV FDB_CLIENT_LIB_PATHS=/usr/local/lib:/usr/lib64
