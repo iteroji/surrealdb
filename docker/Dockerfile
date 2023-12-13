@@ -36,11 +36,22 @@ ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-redhat-linux-gcc
 
 FROM builder as builder-fdb
 
-RUN sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/Rocky-Devel.repo
-RUN yum install -y openssl-static-1.1.1k
+# Compile OpenSSL (copied from https://github.com/FoundationDB/fdb-build-support/blob/main/docker/centos7/Dockerfile#L235)
+RUN yum install -y perl-Pod-Html
+RUN curl -Ls https://www.openssl.org/source/openssl-1.1.1m.tar.gz -o openssl.tar.gz && \
+    echo "f89199be8b23ca45fc7cb9f1d8d3ee67312318286ad030f5316aca6462db6c96  openssl.tar.gz" > openssl-sha.txt && \
+    sha256sum --quiet -c openssl-sha.txt && \
+    mkdir openssl && \
+    tar --strip-components 1 --no-same-owner --directory openssl -xf openssl.tar.gz && \
+    cd openssl && \
+    ./config CFLAGS="-fPIC -O3" --prefix=/usr/local && \
+    make -j`nproc` && \
+    make -j1 install && \
+    cd ../ && \
+    rm -rf openssl*
 
 ENV FDB_CLIENT_STATIC=1
-ENV FDB_CLIENT_LIB_PATHS=/usr/local/lib:/usr/lib64
+ENV FDB_CLIENT_LIB_PATHS=/usr/local/lib:/usr/local/lib64
 
 COPY --from=fdb-static-libs /build_output/lib/* /usr/local/lib/
 
