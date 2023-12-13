@@ -74,11 +74,11 @@ jobs:
               # Prod image
               - &base_image
                 name: Prod image
-                build-target: prod
+                build-target: prod-ci
               # Dev image
               - <<: *base_image
                 name: Dev image
-                build-target: dev
+                build-target: dev-ci
                 tag-suffix: -dev
 
         run: |
